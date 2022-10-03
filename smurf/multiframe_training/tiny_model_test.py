@@ -20,7 +20,7 @@ from absl.testing import absltest
 import numpy as np
 import tensorflow as tf
 
-from smurf.multiframe_training import tiny_model
+from multiframe_training import tiny_model
 
 _IMAGE_HEIGHT = 10
 _IMAGE_WIDTH = 20

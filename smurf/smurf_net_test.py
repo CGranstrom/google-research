@@ -19,7 +19,7 @@ from absl.testing import absltest
 import numpy as np
 import tensorflow as tf
 
-from smurf import smurf_net
+import smurf_net
 
 
 def train_step(smurf_model, inputs, weights):

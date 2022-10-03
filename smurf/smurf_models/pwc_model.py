@@ -25,7 +25,7 @@ from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import Conv2DTranspose
 from tensorflow.keras.layers import LeakyReLU
 
-from smurf import smurf_utils
+import smurf_utils
 
 
 def upsample(img, is_flow):

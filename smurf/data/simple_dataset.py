@@ -19,7 +19,7 @@ import os
 
 import tensorflow as tf
 
-from smurf import smurf_utils
+import smurf_utils
 
 
 def _deserialize_png(raw_data):

@@ -27,7 +27,7 @@ import tensorflow as tf
 from tensorflow_addons import image as tfa_image
 from functools import partial
 
-from smurf import smurf_utils
+import smurf_utils
 
 _TensorTuple2 = Tuple[tf.Tensor, tf.Tensor]
 _TensorTuple3 = Tuple[tf.Tensor, tf.Tensor, tf.Tensor]

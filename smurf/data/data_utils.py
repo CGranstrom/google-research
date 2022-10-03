@@ -27,8 +27,8 @@ from collections import defaultdict
 import numpy as np
 import tensorflow as tf
 
-from smurf import smurf_utils
-from smurf import smurf_plotting
+import smurf_utils
+import smurf_plotting
 
 
 def parse_data(proto,

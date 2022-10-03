@@ -26,7 +26,7 @@ import scipy.misc
 import scipy.ndimage
 import tensorflow as tf
 
-from smurf.data_conversion_scripts import conversion_utils
+from data_conversion_scripts import conversion_utils
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('data_dir',

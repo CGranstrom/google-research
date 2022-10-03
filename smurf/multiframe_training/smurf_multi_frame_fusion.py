@@ -21,11 +21,11 @@ from typing import Callable, Tuple
 import gin
 import tensorflow as tf
 
-from smurf import smurf_plotting
-from smurf import smurf_utils
-from smurf.data_conversion_scripts import conversion_utils
-from smurf.multiframe_training import tiny_model
-from smurf.smurf_net import SMURFNet
+import smurf_plotting
+import smurf_utils
+from data_conversion_scripts import conversion_utils
+from multiframe_training import tiny_model
+from smurf_net import SMURFNet
 
 gin.enter_interactive_mode()
 

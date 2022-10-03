@@ -27,9 +27,9 @@ import matplotlib.pyplot as plt  # pylint: disable=g-import-not-at-top
 import numpy as np
 import tensorflow as tf
 
-from smurf import smurf_plotting
-from smurf import smurf_utils
-from smurf.data import data_utils
+import smurf_plotting
+import smurf_utils
+from data import data_utils
 
 
 def parse_data(proto, height, width):

@@ -21,7 +21,7 @@ from absl import app
 from absl import flags
 import tensorflow as tf
 
-from smurf.data_conversion_scripts import conversion_utils
+from data_conversion_scripts import conversion_utils
 
 
 FLAGS = flags.FLAGS

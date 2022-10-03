@@ -24,11 +24,11 @@ import time
 import tensorflow as tf
 
 # pylint:disable=unused-import
-from smurf import smurf_augmentation
-from smurf import smurf_data
-from smurf import smurf_flags
-from smurf import smurf_plotting
-from smurf.smurf_net import SMURFNet
+import smurf_augmentation
+import smurf_data
+import smurf_flags
+import smurf_plotting
+from smurf_net import SMURFNet
 
 FLAGS = flags.FLAGS
 

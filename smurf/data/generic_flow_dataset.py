@@ -20,10 +20,10 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from smurf.data import data_utils
+from data import data_utils
 # pylint:disable=unused-import
-from smurf.data.data_utils import evaluate
-from smurf.data.data_utils import list_eval_keys
+from data.data_utils import evaluate
+from data.data_utils import list_eval_keys
 
 
 def make_dataset(path,

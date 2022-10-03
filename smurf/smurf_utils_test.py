@@ -21,7 +21,7 @@ from absl.testing import absltest
 import numpy as np
 import tensorflow as tf
 
-from smurf import smurf_utils
+import smurf_utils
 
 
 class SMURFUtilsTest(absltest.TestCase):

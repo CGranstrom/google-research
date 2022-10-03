@@ -17,10 +17,10 @@
 
 from absl.testing import absltest
 
-from smurf.data import generic_flow_dataset
-from smurf.data import kitti
-from smurf.data import sintel
-from smurf.data.dataset_locations import dataset_locations
+from data import generic_flow_dataset
+from data import kitti
+from data import sintel
+from data.dataset_locations import dataset_locations
 
 
 DATASETS_AND_SIZE = {

@@ -24,12 +24,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-from smurf import smurf_plotting
-from smurf import smurf_utils
-from smurf.data import generic_flow_dataset
-from smurf.data import kitti
-from smurf.data import sintel
-from smurf.data.dataset_locations import dataset_locations
+import smurf_plotting
+import smurf_utils
+from data import generic_flow_dataset
+from data import kitti
+from data import sintel
+from data.dataset_locations import dataset_locations
 
 matplotlib.use('Agg')  # None-interactive plots do not need tk
 

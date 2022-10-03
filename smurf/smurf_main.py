@@ -22,8 +22,8 @@ from absl import logging
 import tensorflow as tf
 import gin
 from absl import app
-from smurf import smurf_flags
-from smurf import smurf_trainer
+import smurf_flags
+import smurf_trainer
 
 FLAGS = flags.FLAGS
 

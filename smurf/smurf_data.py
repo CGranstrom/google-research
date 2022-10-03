@@ -26,12 +26,12 @@ from functools import partial
 
 import tensorflow as tf
 
-from smurf import smurf_augmentation
-from smurf.data import generic_flow_dataset as flow_dataset
-from smurf.data import kitti
-from smurf.data import sintel
-from smurf.data import smurf_multiframe_dataset
-from smurf.data import spoof_dataset
+import smurf_augmentation
+from data import generic_flow_dataset as flow_dataset
+from data import kitti
+from data import sintel
+from data import smurf_multiframe_dataset
+from data import spoof_dataset
 
 
 def make_train_dataset(

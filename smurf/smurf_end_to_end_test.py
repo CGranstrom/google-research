@@ -22,8 +22,8 @@ import io
 from absl import flags
 
 from absl.testing import absltest
-from smurf import smurf_flags
-from smurf import smurf_trainer
+import smurf_flags
+import smurf_trainer
 
 FLAGS = flags.FLAGS
 

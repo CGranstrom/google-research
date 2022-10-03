@@ -22,9 +22,9 @@ from absl import app
 from absl import flags
 import tensorflow as tf
 
-from smurf.data import simple_dataset
-from smurf.data_conversion_scripts import conversion_utils
-from smurf.multiframe_training import smurf_multi_frame_fusion
+from data import simple_dataset
+from data_conversion_scripts import conversion_utils
+from multiframe_training import smurf_multi_frame_fusion
 
 FLAGS = flags.FLAGS
 

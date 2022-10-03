@@ -25,10 +25,10 @@ import gin
 import tensorflow as tf
 
 
-from smurf import smurf_data
-from smurf import smurf_flags
-from smurf import smurf_plotting
-from smurf import smurf_net
+import smurf_data
+import smurf_flags
+import smurf_plotting
+import smurf_net
 
 FLAGS = flags.FLAGS
 

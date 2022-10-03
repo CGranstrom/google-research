@@ -21,7 +21,7 @@ from absl.testing import absltest
 import absl.testing.parameterized as parameterized
 import tensorflow as tf  # tf
 
-from smurf.multiframe_training import smurf_multi_frame_fusion
+from multiframe_training import smurf_multi_frame_fusion
 
 _IMAGE_HEIGHT = 10
 _IMAGE_WIDTH = 20

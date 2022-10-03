@@ -19,11 +19,11 @@
 import gin
 import tensorflow as tf
 
-from smurf import smurf_utils
-from smurf.smurf_models.raft_corr import corr_block, corr_pyramid
-from smurf.smurf_models.raft_extractor import BasicEncoder, SmallEncoder
-from smurf.smurf_models.raft_update import BasicUpdateBlock, SmallUpdateBlock
-from smurf.smurf_models.raft_utils import compute_upsample_flow, initialize_flow
+import smurf_utils
+from smurf_models.raft_corr import corr_block, corr_pyramid
+from smurf_models.raft_extractor import BasicEncoder, SmallEncoder
+from smurf_models.raft_update import BasicUpdateBlock, SmallUpdateBlock
+from smurf_models.raft_utils import compute_upsample_flow, initialize_flow
 
 
 class RAFTFeatureSiamese(tf.keras.Model):

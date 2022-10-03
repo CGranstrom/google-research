@@ -16,7 +16,7 @@
 """Implementation of RAFT."""
 
 import tensorflow as tf
-from smurf import smurf_utils
+import smurf_utils
 
 
 def compute_corr(input_tensor):

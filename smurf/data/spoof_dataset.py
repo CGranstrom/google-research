@@ -21,8 +21,8 @@ import numpy as np
 import tensorflow as tf
 
 # pylint:disable=unused-import
-from smurf.data.data_utils import evaluate
-from smurf.data.data_utils import list_eval_keys
+from data.data_utils import evaluate
+from data.data_utils import list_eval_keys
 
 
 def _shift_images(image, include_flow, max_shift):

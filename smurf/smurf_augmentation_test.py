@@ -21,8 +21,8 @@ from absl.testing import absltest
 import numpy as np
 import tensorflow as tf
 
-from smurf import smurf_augmentation
-from smurf import smurf_utils
+import smurf_augmentation
+import smurf_utils
 
 tf.compat.v1.enable_eager_execution()
 

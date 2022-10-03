@@ -25,9 +25,9 @@ import math
 import gin
 import tensorflow as tf
 
-from smurf import smurf_utils
-from smurf.smurf_models import pwc_model
-from smurf.smurf_models import raft_model
+import smurf_utils
+from smurf_models import pwc_model
+from smurf_models import raft_model
 
 
 @gin.configurable
