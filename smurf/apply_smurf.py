@@ -105,25 +105,11 @@ def main(unused_argv):
           infer_occlusion=True, infer_bw=True)
       occlusion = 1. - occlusion
       
-      #test1 = flow_to_rgb(flow_forward) # off by 45
-      test2 = flow_to_rgb(-flow_forward[:,:,::-1]) # close?
-      #test3 = fz.convert_from_flow(flow_forward.numpy())
-      test4 = fz.convert_from_flow(flow_forward[:,:,::-1].numpy()) # maybe
-      #test5 = fz.convert_from_flow(-flow_forward[:,:,::-1].numpy())
-
-
-      
       
       image1_arr = image1.numpy()
-      #image1_arr = image1_arr[0].permute(1,2,0).cpu().numpy()
-      flow_forward_arr = (-flow_forward[:,:,::-1]).numpy()
+      flow_as_image = flow_to_rgb(flow_forward[:, :, ::-1]).numpy()
+      display_flow(-flow_forward.numpy(), flow_as_image, image1_arr)
       
-      # shape = tf.cast(tf.shape(flow_forward), tf.float32)
-      # height, width = shape[-3], shape[-2]
-      # scaling = _FLOW_SCALING_FACTOR / (height**2 + width**2)**0.5
-      flow_as_image = flow_to_rgb(-flow_forward[:, :, ::-1]).numpy()
-      
-      #display_flow(flow_forward_arr, flow_as_image, image1_arr)
       # smurf_plotting.complete_paper_plot(plot_dir=FLAGS.plot_dir, index=i,
       #                                   image1=image1, image2=image2,
       #                                   flow_uv=flow_forward,
@@ -132,17 +118,13 @@ def main(unused_argv):
       #                                   predicted_occlusion=occlusion,
       #                                   ground_truth_occlusion=None)
       
-      #flow = flow_forward.numpy()
-      #flow = np.transpose(flow, a=1)
-      
       if "sintel" not in dir:
         dir_name_for_frame_src = os.path.basename(dir)
       else:
         dir_name_for_frame_src = "sintel/market_2/final"
       output_path = os.path.join(OUTPUT_DIR, dir_name_for_frame_src, "SMURF_sintel_train_on_train")
-      #save_flow_image(flow_as_image, idx, output_path)
-      save_flow_image(-flow_forward.numpy(), idx, output_path, "SMURF")
-      #save_flow_image(flow_forward[:,:,::-1].numpy(), idx, output_path)
+      
+      #save_flow_image(-flow_forward.numpy(), idx, output_path, "SMURF")
 
 
 if __name__ == '__main__':
