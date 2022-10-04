@@ -30,16 +30,32 @@ import sys
 import gin
 
 import tensorflow as tf
+import numpy as np
 
-from smurf import smurf_flags  # pylint:disable=unused-import
-from smurf import smurf_plotting
-from smurf import smurf_evaluator
+import smurf_flags  # pylint:disable=unused-import
+import smurf_plotting
+import smurf_evaluator
+from smurf_plotting import _FLOW_SCALING_FACTOR, flow_to_rgb
+
+
+from src import data
+import output
+import pre_trained_models
+from utils.data_viz import display_flow
+from utils.file_io import save_flow_image
+import flowiz as fz
+
 
 try:
   import cv2  # pylint:disable=g-import-not-at-top
 except:  # pylint:disable=bare-except
   print('Missing cv2 dependency. Please install opencv-python.')
 
+MODEL_DIR = os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel_train_on_train")
+
+DATA_PATH = os.path.dirname(data.__file__)
+FRAMES_DIR = os.path.join(DATA_PATH, "frames")
+OUTPUT_DIR = os.path.dirname(output.__file__)
 
 
 flags.DEFINE_string('data_dir', '', 'Directory with images to run on. Images '
@@ -48,11 +64,13 @@ flags.DEFINE_string('data_dir', '', 'Directory with images to run on. Images '
 FLAGS = flags.FLAGS
 
 
-def get_image_iterator():
-  """Iterate through images in the FLAGS.data_dir."""
-  images = os.listdir(FLAGS.data_dir)
-  images = [os.path.join(FLAGS.data_dir, i) for i in images]
-  images = sorted(images, key=lambda x: int(os.path.basename(x).split('.')[0]))
+def get_image_iterator(image_dir):
+  """Iterate through images in the image_dir."""
+  
+  images = os.listdir(image_dir)
+  images = sorted(images)
+  images = [os.path.join(image_dir, i) for i in images]
+    
   images = zip(images[:-1], images[1:])
   for image1, image2 in images:
     image1 = cv2.imread(image1)
@@ -63,31 +81,69 @@ def get_image_iterator():
     image2 = tf.image.convert_image_dtype(image2, tf.float32)
     yield (image1, image2)
 
-
 def main(unused_argv):
-  if not FLAGS.plot_dir:
-    raise ValueError('apply_smurf needs plot directory.')
-  if not tf.io.gfile.exists(FLAGS.plot_dir):
-    print('Making new plot directory', FLAGS.plot_dir)
-    tf.io.gfile.makedirs(FLAGS.plot_dir)
   gin.parse_config_files_and_bindings(FLAGS.config_file, FLAGS.gin_bindings)
   smurf = smurf_evaluator.build_network(batch_size=1)
-  smurf.update_checkpoint_dir(FLAGS.checkpoint_dir)
+  smurf.update_checkpoint_dir(MODEL_DIR)
   smurf.restore()
-  for i, (image1, image2) in enumerate(get_image_iterator()):
-    sys.stdout.write(':')
-    sys.stdout.flush()
-    flow_forward, occlusion, flow_backward = smurf.infer(
-        image1, image2, input_height=FLAGS.height, input_width=FLAGS.width,
-        infer_occlusion=True, infer_bw=True)
-    occlusion = 1. - occlusion
-    smurf_plotting.complete_paper_plot(plot_dir=FLAGS.plot_dir, index=i,
-                                       image1=image1, image2=image2,
-                                       flow_uv=flow_forward,
-                                       ground_truth_flow_uv=None,
-                                       flow_valid_occ=None,
-                                       predicted_occlusion=occlusion,
-                                       ground_truth_occlusion=None)
+  
+  image_dirs = []
+  for parent_dir, _, images in os.walk(FRAMES_DIR):
+    if len(images) == 0:
+      pass
+    else:
+      image_dirs.append(parent_dir)
+  
+  image_dirs = sorted(image_dirs)
+  
+  for dir in image_dirs:
+    for idx, (image1, image2) in enumerate(get_image_iterator(dir)):
+      sys.stdout.write(':')
+      sys.stdout.flush()
+      flow_forward, occlusion, flow_backward = smurf.infer(
+          image1, image2, input_height=FLAGS.height, input_width=FLAGS.width,
+          infer_occlusion=True, infer_bw=True)
+      occlusion = 1. - occlusion
+      
+      #test1 = flow_to_rgb(flow_forward) # off by 45
+      test2 = flow_to_rgb(-flow_forward[:,:,::-1]) # close?
+      #test3 = fz.convert_from_flow(flow_forward.numpy())
+      test4 = fz.convert_from_flow(flow_forward[:,:,::-1].numpy()) # maybe
+      #test5 = fz.convert_from_flow(-flow_forward[:,:,::-1].numpy())
+
+
+      
+      
+      image1_arr = image1.numpy()
+      #image1_arr = image1_arr[0].permute(1,2,0).cpu().numpy()
+      flow_forward_arr = (-flow_forward[:,:,::-1]).numpy()
+      
+      # shape = tf.cast(tf.shape(flow_forward), tf.float32)
+      # height, width = shape[-3], shape[-2]
+      # scaling = _FLOW_SCALING_FACTOR / (height**2 + width**2)**0.5
+      flow_as_image = flow_to_rgb(-flow_forward[:, :, ::-1]).numpy()
+      
+      #display_flow(flow_forward_arr, flow_as_image, image1_arr)
+      # smurf_plotting.complete_paper_plot(plot_dir=FLAGS.plot_dir, index=i,
+      #                                   image1=image1, image2=image2,
+      #                                   flow_uv=flow_forward,
+      #                                   ground_truth_flow_uv=None,
+      #                                   flow_valid_occ=None,
+      #                                   predicted_occlusion=occlusion,
+      #                                   ground_truth_occlusion=None)
+      
+      #flow = flow_forward.numpy()
+      #flow = np.transpose(flow, a=1)
+      
+      if "sintel" not in dir:
+        dir_name_for_frame_src = os.path.basename(dir)
+      else:
+        dir_name_for_frame_src = "sintel/market_2/final"
+      output_path = os.path.join(OUTPUT_DIR, dir_name_for_frame_src, "SMURF_sintel_train_on_train")
+      #save_flow_image(flow_as_image, idx, output_path)
+      save_flow_image(-flow_forward.numpy(), idx, output_path, "SMURF")
+      #save_flow_image(flow_forward[:,:,::-1].numpy(), idx, output_path)
+
 
 if __name__ == '__main__':
   app.run(main)
