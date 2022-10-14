@@ -40,6 +40,7 @@ from smurf_plotting import _FLOW_SCALING_FACTOR, flow_to_rgb
 
 from src import data
 import output
+import output_640_480
 import pre_trained_models
 from utils.data_viz import display_flow
 from utils.file_io import save_flow_image
@@ -51,11 +52,12 @@ try:
 except:  # pylint:disable=bare-except
   print('Missing cv2 dependency. Please install opencv-python.')
 
-MODEL_DIR = os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel_train_on_train")
+MODEL_DIR = os.path.join(os.path.dirname(pre_trained_models.__file__), "kitti-smurf")
 
 DATA_PATH = os.path.dirname(data.__file__)
 FRAMES_DIR = os.path.join(DATA_PATH, "frames")
-OUTPUT_DIR = os.path.dirname(output.__file__)
+#OUTPUT_DIR = os.path.dirname(output.__file__)
+OUTPUT_DIR = os.path.dirname(output_640_480.__file__)
 
 
 flags.DEFINE_string('data_dir', '', 'Directory with images to run on. Images '
@@ -106,9 +108,9 @@ def main(unused_argv):
       occlusion = 1. - occlusion
       
       
-      image1_arr = image1.numpy()
-      flow_as_image = flow_to_rgb(flow_forward[:, :, ::-1]).numpy()
-      display_flow(-flow_forward.numpy(), flow_as_image, image1_arr)
+      #image1_arr = image1.numpy()
+      #flow_as_image = flow_to_rgb(flow_forward[:, :, ::-1]).numpy()
+      #display_flow(-flow_forward.numpy(), flow_as_image, image1_arr)
       
       # smurf_plotting.complete_paper_plot(plot_dir=FLAGS.plot_dir, index=i,
       #                                   image1=image1, image2=image2,
@@ -122,9 +124,9 @@ def main(unused_argv):
         dir_name_for_frame_src = os.path.basename(dir)
       else:
         dir_name_for_frame_src = "sintel/market_2/final"
-      output_path = os.path.join(OUTPUT_DIR, dir_name_for_frame_src, "SMURF_sintel_train_on_train")
+      output_path = os.path.join(OUTPUT_DIR, dir_name_for_frame_src, "SMURF_kitti-smurf")
       
-      #save_flow_image(-flow_forward.numpy(), idx, output_path, "SMURF")
+      save_flow_image(-flow_forward.numpy(), idx, output_path, model="SMURF", res=(640, 480))
 
 
 if __name__ == '__main__':

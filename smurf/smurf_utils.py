@@ -131,7 +131,9 @@ def flow_to_warp(flow):
   """
 
   # Construct a grid of the image coordinates.
-  height, width = flow.shape.as_list()[-3:-1]
+  # height, width = flow.shape.as_list()[-3:-1]
+  # modify to work with np arrays for both tf/torch compatibility
+  height, width = flow.shape[-3:-1]
   i_grid, j_grid = tf.meshgrid(
       tf.linspace(0.0, height - 1.0, int(height)),
       tf.linspace(0.0, width - 1.0, int(width)),
