@@ -24,6 +24,7 @@ import functools
 import math
 import gin
 import tensorflow as tf
+from memory_profiler import profile
 
 import smurf_utils
 from smurf_models import pwc_model
@@ -359,13 +360,14 @@ class SMURFNet(object):
 
     return flow
 
+  @profile
   @tf.function
   def infer(self,
             image1,
             image2,
             input_height=None,
             input_width=None,
-            resize_flow_to_img_res=True,
+            resize_flow_to_img_res=True, #make false
             infer_occlusion=False,
             infer_bw=False):
     return self.infer_no_tf_function(image1, image2, input_height, input_width,
