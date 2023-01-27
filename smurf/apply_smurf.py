@@ -45,8 +45,8 @@ import itertools
 import smurf_net
 
 from src import data
-import output
-import output_640_480
+from output import opt_flow_output
+from output import opt_flow_output_640_480
 import pre_trained_models
 from utils.data_viz import display_flow
 from utils.file_io import save_flow_image
@@ -68,7 +68,7 @@ MODEL_PATHS = [os.path.join(os.path.dirname(pre_trained_models.__file__), "sinte
 DATA_PATH = os.path.dirname(data.__file__)
 FRAMES_DIR = os.path.join(DATA_PATH, "frames_640_480/ir_video_of_compartment_fire_extra")
 #OUTPUT_DIR = os.path.dirname(output.__file__)
-OUTPUT_DIR = os.path.dirname(output_640_480.__file__)
+OUTPUT_DIR = os.path.dirname(opt_flow_output_640_480.__file__)
 METRICS_REPORT_PATH = os.path.join(DATA_PATH, "../system_resource_metrics")
 
 DIRS_TO_SKIP = ("34539_fire_helmet_cam_2014_extra", "sintel")
