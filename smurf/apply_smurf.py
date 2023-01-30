@@ -29,8 +29,8 @@ import os
 import sys
 import gin
 
-import pprofile
-profiler = pprofile.Profile()
+# import pprofile
+# profiler = pprofile.Profile()
 from timeit import default_timer as timer
 
 import tensorflow as tf
@@ -40,13 +40,12 @@ import smurf_flags  # pylint:disable=unused-import
 #import smurf_plotting
 import smurf_evaluator
 from smurf_plotting import _FLOW_SCALING_FACTOR, flow_to_rgb
-import yappi
+#import yappi
 import itertools
 import smurf_net
 
 from src import data
-from output import opt_flow_output
-from output import opt_flow_output_640_480
+from output import opt_flow_output, opt_flow_output_640_480, scratch, system_resource_metrics_output
 import pre_trained_models
 from utils.data_viz import display_flow
 from utils.file_io import save_flow_image
@@ -66,18 +65,20 @@ MODEL_PATHS = [os.path.join(os.path.dirname(pre_trained_models.__file__), "sinte
 
 
 DATA_PATH = os.path.dirname(data.__file__)
-FRAMES_DIR = os.path.join(DATA_PATH, "frames_640_480/ir_video_of_compartment_fire_extra")
+FRAMES_DIR = os.path.join(DATA_PATH, "frames_640_480")
 #OUTPUT_DIR = os.path.dirname(output.__file__)
-OUTPUT_DIR = os.path.dirname(opt_flow_output_640_480.__file__)
-METRICS_REPORT_PATH = os.path.join(DATA_PATH, "../system_resource_metrics")
+FLOW_OUTPUT_DIR = os.path.dirname(scratch.__file__)
+#METRICS_REPORT_DIR = os.path.join(DATA_PATH, "../system_resource_metrics")
+METRICS_REPORT_DIR = os.path.dirname(system_resource_metrics_output.__file__)
 
-DIRS_TO_SKIP = ("34539_fire_helmet_cam_2014_extra", "sintel")
-PATHS_TO_SKIP = tuple(os.path.join(FRAMES_DIR, _dir) for _dir in DIRS_TO_SKIP)
+
+#DIRS_TO_SKIP = ("34539_fire_helmet_cam_2014_extra", "sintel")
+#PATHS_TO_SKIP = tuple(os.path.join(FRAMES_DIR, _dir) for _dir in DIRS_TO_SKIP)
 
 #RUN_MODE = "perf_testing"
 RUN_MODE = "gen_images"
-NUM_IMAGES_IN_DIR = 200  # 208
-clock_types = ["wall"]#, "cpu"]
+NUM_IMAGES_IN_DIR = 5
+clock_types = ["wall"]
 
 
 flags.DEFINE_string('data_dir', '', 'Directory with images to run on. Images '
@@ -106,19 +107,19 @@ def get_image_iterator(image_dir: str, end_idx: int):
 def main(unused_argv):
   for model_path, CLOCK_TYPE in itertools.product(MODEL_PATHS, clock_types):
     print(f"NOW ON MODEL {model_path}, clock type {CLOCK_TYPE}\n\n\n\n\n")
-    yappi.set_clock_type(CLOCK_TYPE)
+    #yappi.set_clock_type(CLOCK_TYPE)
     
     experiment_label = f"TOTAL for {os.path.basename(model_path)} {CLOCK_TYPE} time"
     dir_names = [experiment_label]
 
-    gin.parse_config_files_and_bindings(FLAGS.config_file, FLAGS.gin_bindings)
+    gin.parse_config_files_and_bindings(FLAGS.config_file, FLAGS.gin_bindings, finalize_config=False)
     smurf = smurf_evaluator.build_network(batch_size=1)
     smurf.update_checkpoint_dir(MODEL_DIR)
     smurf.restore()
     
     image_dirs = []
     for parent_dir, _, images in sorted(os.walk(FRAMES_DIR)):
-      if not images or parent_dir in PATHS_TO_SKIP:
+      if not images:
         continue
       elif "sintel" in parent_dir:
         dir_names.append("sintel")
@@ -145,6 +146,7 @@ def main(unused_argv):
     
     TRIAL_CTR=0
     
+    # TODO: clean up subdir iteration, make the same as raft's demo.py
     if RUN_MODE == "perf_testing":
       for dir in image_dirs:
         (dir_num_trials,dir_agg_runtime,dir_mean_runtime,dir_median_runtime,dir_std_dev_runtime) = (0, 0, 0, 0, 0)
@@ -284,40 +286,39 @@ def main(unused_argv):
           #                                   flow_valid_occ=None,
           #                                   predicted_occlusion=occlusion,
           #                                   ground_truth_occlusion=None)
-          if "sintel" not in dir:
-            dir_name_for_frame_src = os.path.basename(dir)
-          else:
-            dir_name_for_frame_src = "sintel/market_2/final"
+          dir_name_for_frame_src = os.path.basename(dir)
             
-          output_path = os.path.join(OUTPUT_DIR, dir_name_for_frame_src, "SMURF_kitti-smurf")
+          output_path = os.path.join(FLOW_OUTPUT_DIR, dir_name_for_frame_src, f"SMURF_{os.path.basename(model_path)}")
           
           save_flow_image(-flow_forward.numpy(), idx, output_path, model="SMURF", res=(640, 480))
           
-    total_runtime = sum(total_runtimes)
-    total_mean_runtime = np.mean(total_runtimes)
-    total_median_runtime = np.median(total_runtimes)
-    total_std_dev_runtime = np.std(total_runtimes)
-    total_num_trials = len(total_runtimes)
+    # uncomment below for runtime stats 
+    
+    # total_runtime = sum(total_runtimes)
+    # total_mean_runtime = np.mean(total_runtimes)
+    # total_median_runtime = np.median(total_runtimes)
+    # total_std_dev_runtime = np.std(total_runtimes)
+    # total_num_trials = len(total_runtimes)
 
-    tmp_dict = {"dir_agg_runtime": total_runtime, "dir_mean_runtime": total_mean_runtime, "dir_median_runtime": total_median_runtime, "dir_std_dev_runtime":total_std_dev_runtime, "dir_num_trials": total_num_trials, "image_res": np.nan}
+    # tmp_dict = {"dir_agg_runtime": total_runtime, "dir_mean_runtime": total_mean_runtime, "dir_median_runtime": total_median_runtime, "dir_std_dev_runtime":total_std_dev_runtime, "dir_num_trials": total_num_trials, "image_res": np.nan}
         
-    run_stats.loc[experiment_label, tmp_dict.keys()] = tmp_dict.values()
-    # run_stats.loc[experiment_label] = {
-    #     "dir_agg_runtime": total_runtime,
-    #     "dir_mean_runtime": total_mean_runtime,
-    #     "dir_median_runtime": total_median_runtime,
-    #     "dir_std_dev_runtime": total_std_dev_runtime,
-    #     "dir_num_trials": total_num_trials,
-    #     "image_res": np.nan,
-    #     }
+    # run_stats.loc[experiment_label, tmp_dict.keys()] = tmp_dict.values()
+    # # run_stats.loc[experiment_label] = {
+    # #     "dir_agg_runtime": total_runtime,
+    # #     "dir_mean_runtime": total_mean_runtime,
+    # #     "dir_median_runtime": total_median_runtime,
+    # #     "dir_std_dev_runtime": total_std_dev_runtime,
+    # #     "dir_num_trials": total_num_trials,
+    # #     "image_res": np.nan,
+    # #     }
     
     
-    # run_stats.to_csv(
-    #     os.path.join(
-    #         METRICS_REPORT_PATH,
-    #         f"{os.path.basename(model_path)}_{CLOCK_TYPE}_runtimes_640_480_no_occlusion_or_bkwrd_more_images_justRAFT.csv",
-    #     )
-    #     )    
+    # # run_stats.to_csv(
+    # #     os.path.join(
+    # #         METRICS_REPORT_PATH,
+    # #         f"{os.path.basename(model_path)}_{CLOCK_TYPE}_runtimes_640_480_no_occlusion_or_bkwrd_more_images_justRAFT.csv",
+    # #     )
+    # #     )    
 
 
 if __name__ == '__main__':

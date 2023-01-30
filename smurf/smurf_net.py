@@ -360,7 +360,7 @@ class SMURFNet(object):
 
     return flow
 
-  @profile
+  #@profile
   @tf.function
   def infer(self,
             image1,
