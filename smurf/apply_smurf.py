@@ -13,14 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-r"""Produces videos of flow predictions from a directory of ordered images.
+r"""Produces sequential frames of flow predictions from a directory of ordered images.
 
 Run with a directory of images using apply_smurf \
-  --data_dir=<directory with images> \
+  --data_dir=<directory with images and/or subdirectories with images> \
   --plot_dir=<directory to output results> \
   --checkpoint_dir=<directory to restore model from>
 """
 
+from typing import Optional
 from absl import app
 from absl import flags
 
@@ -37,21 +38,15 @@ import tensorflow as tf
 import numpy as np
 
 import smurf_flags  # pylint:disable=unused-import
-#import smurf_plotting
 import smurf_evaluator
-from smurf_plotting import _FLOW_SCALING_FACTOR, flow_to_rgb
-#import yappi
 import itertools
 import smurf_net
 
 from src import data
-from output import opt_flow_output, opt_flow_output_640_480, scratch, system_resource_metrics_output
+from output import opt_flow_output, opt_flow_output_640_480, opt_flow_output_640_360, scratch, system_resource_metrics_output
 import pre_trained_models
-from utils.data_viz import display_flow
 from utils.file_io import save_flow_image
-import flowiz as fz
 import pandas as pd
-print(pd.__version__)
 
 try:
   import cv2  # pylint:disable=g-import-not-at-top
@@ -60,14 +55,22 @@ except:  # pylint:disable=bare-except
 
 MODEL_DIR = os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel-smurf")
 # MODEL_PATHS = [MODEL_DIR]#, os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel-smurf")]
-MODEL_PATHS = [os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel-smurf"),
-               os.path.join(os.path.dirname(pre_trained_models.__file__), "kitti-smurf")]
+# MODEL_PATHS = [os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel-smurf"),
+#                os.path.join(os.path.dirname(pre_trained_models.__file__), "kitti-smurf")]
+
+MODEL_PATHS = [os.path.join(os.path.dirname(pre_trained_models.__file__), "sintel-smurf")]
 
 
 DATA_PATH = os.path.dirname(data.__file__)
-FRAMES_DIR = os.path.join(DATA_PATH, "frames_640_480")
+#FRAMES_DIR = os.path.join(DATA_PATH, "frames_640_480")
+FRAMES_DIR = os.path.join(DATA_PATH, "frames_640_360")
+
 #OUTPUT_DIR = os.path.dirname(output.__file__)
-FLOW_OUTPUT_DIR = os.path.dirname(scratch.__file__)
+#FLOW_OUTPUT_DIR = os.path.dirname(scratch.__file__)
+FLOW_OUTPUT_DIR = os.path.dirname(opt_flow_output_640_360.__file__)
+#FLOW_OUTPUT_DIR = os.path.dirname(scratch.__file__)
+
+
 #METRICS_REPORT_DIR = os.path.join(DATA_PATH, "../system_resource_metrics")
 METRICS_REPORT_DIR = os.path.dirname(system_resource_metrics_output.__file__)
 
@@ -77,7 +80,12 @@ METRICS_REPORT_DIR = os.path.dirname(system_resource_metrics_output.__file__)
 
 #RUN_MODE = "perf_testing"
 RUN_MODE = "gen_images"
-NUM_IMAGES_IN_DIR = 5
+NUM_IMAGES_IN_DIR = 18012
+# 128_fairfield: 18012. 5 mins / 1000 inferences --> 5 fps --> 1 hour
+# 252_woods: 29261
+# command_view: 19,190
+# house_fire_twice: 3,824
+# working_house_fire: 25,153
 clock_types = ["wall"]
 
 
@@ -87,10 +95,13 @@ flags.DEFINE_string('data_dir', '', 'Directory with images to run on. Images '
 FLAGS = flags.FLAGS
 
 
-def get_image_iterator(image_dir: str, end_idx: int):
+def get_image_iterator(image_dir: str, end_idx: Optional[int]= None):
   """Iterate through images in the image_dir."""
   
-  images = os.listdir(image_dir)[:end_idx]
+  images = os.listdir(image_dir)
+  if end_idx:
+    images = images[:end_idx]
+  
   images = sorted(images)
   images = [os.path.join(image_dir, i) for i in images]
     
@@ -114,7 +125,8 @@ def main(unused_argv):
 
     gin.parse_config_files_and_bindings(FLAGS.config_file, FLAGS.gin_bindings, finalize_config=False)
     smurf = smurf_evaluator.build_network(batch_size=1)
-    smurf.update_checkpoint_dir(MODEL_DIR)
+    #smurf.update_checkpoint_dir(MODEL_DIR)
+    smurf.update_checkpoint_dir(model_path)
     smurf.restore()
     
     image_dirs = []
@@ -128,7 +140,7 @@ def main(unused_argv):
         dir_names.append(os.path.basename(parent_dir))
         image_dirs.append(parent_dir)
     
-    image_dirs = sorted(image_dirs)
+    image_dirs = sorted(image_dirs, reverse=True)
     
     run_stats = pd.DataFrame(
         [[0.0] * 5 + [(1, 1)]] * len(dir_names),
@@ -140,7 +152,7 @@ def main(unused_argv):
             "dir_num_trials",
             "image_res",
             ],
-        index=dir_names, dtype=np.float
+        index=dir_names, dtype=np.float64
         )
     total_runtimes = []
     
@@ -152,7 +164,7 @@ def main(unused_argv):
         (dir_num_trials,dir_agg_runtime,dir_mean_runtime,dir_median_runtime,dir_std_dev_runtime) = (0, 0, 0, 0, 0)
         dir_runtimes = []
         
-        for idx, (image1, image2) in enumerate(get_image_iterator(dir, NUM_IMAGES_IN_DIR)):
+        for idx, (image1, image2) in enumerate(get_image_iterator(dir, NUM_IMAGES_IN_DIR + 1)):
             sys.stdout.write(':')
             sys.stdout.flush()
             
@@ -216,18 +228,7 @@ def main(unused_argv):
             # SMURFNet.tf__infer
             #occlusion = 1. - occlusion
             
-            
-            #image1_arr = image1.numpy()
-            #flow_as_image = flow_to_rgb(flow_forward[:, :, ::-1]).numpy()
-            #display_flow(-flow_forward.numpy(), flow_as_image, image1_arr)
-            
-            # smurf_plotting.complete_paper_plot(plot_dir=FLAGS.plot_dir, index=i,
-            #                                   image1=image1, image2=image2,
-            #                                   flow_uv=flow_forward,
-            #                                   ground_truth_flow_uv=None,
-            #                                   flow_valid_occ=None,
-            #                                   predicted_occlusion=occlusion,
-            #                                   ground_truth_occlusion=None)
+          
             
             if "sintel" not in dir:
               dir_name_for_frame_src = os.path.basename(dir)
@@ -264,7 +265,7 @@ def main(unused_argv):
         
     elif RUN_MODE == "gen_images":
       for dir in image_dirs:
-        for idx, (image1, image2) in enumerate(get_image_iterator(dir, NUM_IMAGES_IN_DIR)):
+        for idx, (image1, image2) in enumerate(get_image_iterator(dir)): #enumerate(get_image_iterator(dir, NUM_IMAGES_IN_DIR + 1)):
 
 
           sys.stdout.write(':')
@@ -274,23 +275,11 @@ def main(unused_argv):
               infer_occlusion=True, infer_bw=True)
           occlusion = 1. - occlusion
           
-          
-          #image1_arr = image1.numpy()
-          #flow_as_image = flow_to_rgb(flow_forward[:, :, ::-1]).numpy()
-          #display_flow(-flow_forward.numpy(), flow_as_image, image1_arr)
-          
-          # smurf_plotting.complete_paper_plot(plot_dir=FLAGS.plot_dir, index=i,
-          #                                   image1=image1, image2=image2,
-          #                                   flow_uv=flow_forward,
-          #                                   ground_truth_flow_uv=None,
-          #                                   flow_valid_occ=None,
-          #                                   predicted_occlusion=occlusion,
-          #                                   ground_truth_occlusion=None)
           dir_name_for_frame_src = os.path.basename(dir)
             
-          output_path = os.path.join(FLOW_OUTPUT_DIR, dir_name_for_frame_src, f"SMURF_{os.path.basename(model_path)}")
+          output_path = os.path.join(FLOW_OUTPUT_DIR, dir_name_for_frame_src)
           
-          save_flow_image(-flow_forward.numpy(), idx, output_path, model="SMURF", res=(640, 480))
+          save_flow_image(-flow_forward.numpy(), idx, output_path, model="SMURF", res=(640, 360))
           
     # uncomment below for runtime stats 
     
